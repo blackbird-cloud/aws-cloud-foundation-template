@@ -1,0 +1,80 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Creates a S3 bucket and KMS key in every account with the purpose of storing Terraform state.
+
+Resources:
+  KmsKey:
+    Type: "AWS::KMS::Key"
+    DeletionPolicy: Retain
+    Properties:
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: 2012-10-17
+        Id: !Sub ${AWS::StackName}-${AWS::AccountId}-key-policy
+        Statement:
+          - Sid: Allow source account access to KMS key in source account
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root
+            Action: kms:*
+            Resource: "*"
+
+  KmsKeyAlias:
+    Type: "AWS::KMS::Alias"
+    Properties:
+      AliasName: !Sub alias/${AWS::StackName}-${AWS::AccountId}-kms-key
+      TargetKeyId: !Ref KmsKey
+
+  S3BucketSource:
+    Type: "AWS::S3::Bucket"
+    DeletionPolicy: Retain
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: !Ref KmsKey
+            BucketKeyEnabled: true
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+
+  S3AccessLogsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    DeletionPolicy: Retain
+    Properties:
+      Bucket: !Ref S3BucketSource
+      PolicyDocument:
+        Statement:
+          - Sid: EnforcedTLS
+            Effect: Deny
+            Action: s3:*
+            Resource:
+              - !Sub arn:${AWS::Partition}:s3:::${S3BucketSource}
+              - !Sub arn:${AWS::Partition}:s3:::${S3BucketSource}/*
+            Principal: "*"
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+          - Sid: DenyOutdatedTLS
+            Effect: Deny
+            Action: s3:*
+            Resource:
+              - !Sub arn:${AWS::Partition}:s3:::${S3BucketSource}
+              - !Sub arn:${AWS::Partition}:s3:::${S3BucketSource}/*
+            Principal: "*"
+            Condition:
+              NumericLessThan:
+                s3:TlsVersion: "1.2"
+          - Sid: RootAccess
+            Effect: Allow
+            Action: s3:*
+            Resource:
+              - !Sub arn:${AWS::Partition}:s3:::${S3BucketSource}
+              - !Sub arn:${AWS::Partition}:s3:::${S3BucketSource}/*
+            Principal:
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root

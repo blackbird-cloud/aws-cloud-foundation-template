@@ -1,0 +1,46 @@
+name: Deploy to AWS
+on:
+  push:
+    paths:
+      - "cloud/**"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      accounts: ${{ steps.filter.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            management:
+              - 'cloud/management/**'
+  RunApply:
+    runs-on: ubuntu-latest
+    needs: changes
+    strategy:
+      matrix:
+        account: ${{ fromJSON(needs.changes.outputs.accounts) }}
+    container: blackbirdcloud/terraform-toolkit:0.0.8
+    steps:
+      - name: Git clone the repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: change --global to --system
+        run: git config --global --add safe.directory /__w/my-project-name/my-project-name
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ vars.AWS_IAM_ROLE }}
+          role-session-name: github-action
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: apply
+        working-directory: ./cloud/${{ matrix.account }}
+        run: terragrunt run-all apply --terragrunt-fetch-dependency-output-from-state --terragrunt-non-interactive --terragrunt-ignore-external-dependencies --terragrunt-download-dir=../../.terragrunt-cache

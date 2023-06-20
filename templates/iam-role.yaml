@@ -1,0 +1,54 @@
+
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: >
+  Creates assumable IAM Role with managed policy
+
+Parameters:
+  RoleName:
+    Type: String
+    Description:  Name for IAM Role
+  PrincipalARN:
+    Type: String
+    Description: Principal ARN allowed to assume this role
+  ManagedPolicyARNs:
+    Type: CommaDelimitedList
+    Description: Comma separated list for arns for managed policies to attach to the role
+  Path:
+    Type: String
+    Default: "/"
+    Description: IAM Path required for the role
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "AWS IAM Info"
+        Parameters:
+          - RoleName
+          - Path
+          - ManagedPolicyARNs
+
+Resources:
+  IAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref RoleName
+      ManagedPolicyArns: !Ref ManagedPolicyARNs
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: RoleForGitHubActions
+            Effect: Allow
+            Principal:
+              AWS: !Ref PrincipalARN
+            Action:
+              - "sts:AssumeRole"
+      Description: Service Role for use in GitHub Actions
+      Path: !Ref Path
+Outputs:
+  IAMRole:
+    Description: Generated IAM Role ARN
+    Value: !GetAtt IAMRole.Arn
+  RoleId:
+    Description: Generated IAM Role RoleId
+    Value: !GetAtt IAMRole.RoleId
