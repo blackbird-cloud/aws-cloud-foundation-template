@@ -67,7 +67,7 @@ inputs = {
       accounts = [
         {
           name  = "security-tooling"
-          email = "info+${local.global.account_email_label_prefix}-security-tooling@${local.global.account_email_domain}"
+          email = "info+${local.global.repository}-security-tooling@${local.global.account_email_domain}"
           delegated_administrator_services = [
             "config.amazonaws.com",
             "guardduty.amazonaws.com",
