@@ -1,5 +1,5 @@
 locals {
-  ## MANUAL STEP: Enter manually
+  ## Enter manually
   account_id = "<my account id>"
   bucket     = "<my bucket name>"
   ## ===========================
@@ -36,7 +36,7 @@ remote_state {
 inputs = {
   tags = {
     terragrunt = get_path_from_repo_root()
-    project    = local.global.project
+    repository = local.global.repository
   }
 }
 
