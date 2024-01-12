@@ -73,7 +73,11 @@ inputs = {
         ]
       },
       "Action": [
-        "s3:ListBucket"
+        "s3:ListBucket",
+        "s3:GetBucketVersioning",
+        "s3:GetBucketPolicy",
+        "s3:GetEncryptionConfiguration",
+        "s3:GetBucketPublicAccessBlock"
       ],
       "Resource": [
         "${dependency.bucket.outputs.s3_bucket_arn}"
