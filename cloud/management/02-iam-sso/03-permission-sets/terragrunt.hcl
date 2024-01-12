@@ -2,13 +2,17 @@ include {
   path = find_in_parent_folders()
 }
 
+include "remote_state" {
+  path = find_in_parent_folders("remote_state.hcl")
+}
+
 dependency "organization" {
   config_path  = "../..//00-organization"
   skip_outputs = true
 }
 
 terraform {
-  source = "tfr:///blackbird-cloud/ssoadmin/aws//modules/permission-sets?version=1.0.1"
+  source = "tfr:///blackbird-cloud/ssoadmin/aws//modules/permission-sets?version=1.1.1"
 }
 
 inputs = {
@@ -23,7 +27,8 @@ inputs = {
       customer_managed_policy_attachments = [],
       policy_attachments                  = ["arn:aws:iam::aws:policy/AdministratorAccess"]
     },
-    { name                                = "PowerUserAccess",
+    {
+      name                                = "PowerUserAccess",
       description                         = "PowerUserAccess",
       relay_state                         = "",
       session_duration                    = "PT8H",

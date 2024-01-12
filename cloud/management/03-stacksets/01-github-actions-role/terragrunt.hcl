@@ -2,6 +2,10 @@ include {
   path = find_in_parent_folders()
 }
 
+include "remote_state" {
+  path = find_in_parent_folders("remote_state.hcl")
+}
+
 dependency "organization" {
   config_path = "../..//00-organization"
   mock_outputs = {
@@ -24,7 +28,7 @@ terraform {
 }
 
 inputs = {
-  name          = "admin-assumable-role"
+  name          = "github-actions-administratoraccess-role"
   template_body = file("${get_repo_root()}/templates/iam-role.yaml")
   description   = "Assumable role for AdminAccess"
 
@@ -37,7 +41,7 @@ inputs = {
 
   parameters = {
     RoleName          = local.global.github_role_name
-    PrincipalARN      = local.global.github_role_arn
+    PrincipalARN      = local.global.github_actions_state_role_arn
     ManagedPolicyARNs = "arn:aws:iam::aws:policy/AdministratorAccess"
   }
 

@@ -32,3 +32,4 @@ inputs = {
     repository = local.global.repository
   }
 }
+

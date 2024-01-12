@@ -1,4 +1,3 @@
-
 AWSTemplateFormatVersion: 2010-09-09
 
 Description: >
@@ -7,7 +6,7 @@ Description: >
 Parameters:
   RoleName:
     Type: String
-    Description:  Name for IAM Role
+    Description: Name for IAM Role
   PrincipalARN:
     Type: String
     Description: Principal ARN allowed to assume this role
@@ -45,6 +44,10 @@ Resources:
               - "sts:AssumeRole"
       Description: Service Role for use in GitHub Actions
       Path: !Ref Path
+      Tags:
+        - Key: Name
+          Value: !Join ["-", [!Sub "${AWS::StackName}", !Ref "AWS::Region"]]
+
 Outputs:
   IAMRole:
     Description: Generated IAM Role ARN
