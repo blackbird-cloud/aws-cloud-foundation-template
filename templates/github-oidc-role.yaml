@@ -1,0 +1,93 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: >
+  Creates a role for use with GitHub Actions.
+  For more information on using OIDC to connect to AWS from GitHub Actions,
+  see https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services.
+
+Parameters:
+  RoleName:
+    Type: String
+    Default: "GitHub"
+    Description: "Name for IAM Role"
+  GitHubActionsJumpRoleName:
+    Type: String
+    Default: "GitHubActions"
+    Description: "Name for the IAM Role that this role is allowed to assume."
+  AudienceList:
+    Type: CommaDelimitedList
+    Default: sts.amazonaws.com
+    Description: >
+      Comma seperated list of allowed audience for the tokens.
+      Default is audience for the official AWS configure action from https://github.com/aws-actions/configure-aws-credentials
+  SubjectClaimFilters:
+    Type: CommaDelimitedList
+    Description: >
+      Subject claim filter for valid tokens.
+      Fill in using the following format `repo:YOUR_ORGANIZATION/YOUR_REPO:ref:refs/heads/BRANCH_NAME` we advise to deploy use `main` as branch name. This is nessecary to make sure that only GitHub Actions that run on the main branch are allowed to plan and apply changes on AWS.
+  Path:
+    Type: String
+    Default: "/"
+    Description: IAM Path required for the role
+  GitHubIdentityProviderArn:
+    Type: String
+    Description: ARN Of the AWS IDP for GitHub Actions.
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "GitHub Action Info"
+        Parameters:
+          - SubjectClaimFilters
+      - Label:
+          default: "AWS IAM Info"
+        Parameters:
+          - RoleName
+          - Path
+
+Resources:
+  GitHubActionsServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref RoleName
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: RoleForGitHubActions
+            Effect: Allow
+            Principal:
+              Federated: !Ref GitHubIdentityProviderArn
+            Action:
+              - "sts:AssumeRoleWithWebIdentity"
+            Condition:
+              StringEquals:
+                "token.actions.githubusercontent.com:aud": !Ref AudienceList
+              StringLike:
+                "token.actions.githubusercontent.com:sub": !Ref SubjectClaimFilters
+      Description: Service Role for use in GitHub Actions
+      Path: !Ref Path
+  GitHubActionsServiceRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: GitHubActionsServiceRolePolicy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Resource:
+              !Join [
+                ":",
+                ["arn:aws:iam:", "*", !Sub "role/${GitHubActionsJumpRoleName}"],
+              ]
+
+      Roles: [!Ref GitHubActionsServiceRole]
+Outputs:
+  ServiceRoleARN:
+    Description: ARN of service role for use in GitHub actions
+    Value: !GetAtt GitHubActionsServiceRole.Arn
+  ServiceRoleRoleId:
+    Description: RoleId of service role for use in GitHub actions
+    Value: !GetAtt GitHubActionsServiceRole.RoleId

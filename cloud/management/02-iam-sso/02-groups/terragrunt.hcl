@@ -2,6 +2,10 @@ include {
   path = find_in_parent_folders()
 }
 
+include "remote_state" {
+  path = find_in_parent_folders("remote_state.hcl")
+}
+
 dependency "users" {
   config_path = "..//01-users"
   ## MANUAL STEP: On initial run align the following value with 01-users, make sure all emails registered 01-users are here. user_id value can be left "user_id"

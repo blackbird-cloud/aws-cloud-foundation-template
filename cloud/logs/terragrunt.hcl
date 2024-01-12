@@ -9,6 +9,7 @@ locals {
 
 download_dir = "${get_repo_root()}/.terragrunt-cache"
 
+
 generate "provider" {
   path      = "aws-provider.tf"
   if_exists = "overwrite"
@@ -32,3 +33,4 @@ inputs = {
     repository = local.global.repository
   }
 }
+
