@@ -73,11 +73,11 @@ If you see this error, it means you are being rate limited by AWS. Simply re-run
 
 ## Future improvements
 
-[ ] Make Cloudformation bucket public with templates
+- [ ] Make Cloudformation bucket public with templates
 
-[ ] Double check CI files and remove hardcodes
+- [ ] Double check CI files and remove hardcodes
 
-[ ] Add mock outputs to organization dependencies
+- [ ] Add mock outputs to organization dependencies
 
 ## About Blackbird Cloud
 
